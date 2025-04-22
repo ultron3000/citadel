@@ -10,6 +10,8 @@
             background-color: #000;
             color: white;
             text-align: center;
+            margin: 0;
+            padding: 0;
         }
         .back-button {
             margin: 20px;
@@ -25,11 +27,17 @@
             background-color: #c0392b;
         }
         video {
-            width: 80%;
-            max-width: 900px;
+            width: 90%;
+            max-width: 1000px;
             height: auto;
             border-radius: 10px;
-            margin: 20px 0;
+            margin-top: 30px;
+        }
+        /* Ensure video is responsive */
+        @media (max-width: 768px) {
+            video {
+                width: 100%;
+            }
         }
     </style>
 </head>
