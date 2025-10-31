@@ -2,195 +2,178 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CITADEL</title>
+  <title>Citadel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #ffdd33; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in { animation: fadeIn 0.45s ease-out forwards; }
-    .delay-1 { animation-delay: 0.08s; } .delay-2 { animation-delay: 0.16s; } .delay-3 { animation-delay: 0.24s; } .delay-4 { animation-delay: 0.32s; } .delay-5 { animation-delay: 0.40s; }
-
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ffcc00;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ffdd33;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    
     .glow-effect { position: relative; }
     .glow-effect::after {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 12px;
-      box-shadow: 0 0 15px rgba(255, 204, 0, 0); transition: box-shadow 0.3s ease; pointer-events: none;
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(255, 204, 0, 0);
+      transition: box-shadow 0.3s ease;
+      pointer-events: none;
     }
     .glow-effect:hover::after { box-shadow: 0 0 15px rgba(255, 204, 0, 0.7); }
-
+    
     .gradient-text {
-      background: linear-gradient(90deg, #ffcc00, #ff9900); -webkit-background-clip: text;
-      background-clip: text; color: transparent;
+      background: linear-gradient(90deg, #ffcc00, #ff9900);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    
+    .showcase-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    
+    .showcase-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
+      z-index: 1;
+    }
+    .showcase-content { position: relative; z-index: 2; }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
     }
 
-    @media (max-width: 640px) { .movie-card { width: calc(50% - 1rem); } }
-    @media (max-width: 400px) { .movie-card { width: 100%; } }
-
-    /* Modal area tweaks */
-    #playback-modal .aspect-video { aspect-ratio: 16/9; }
-    .quality-btn { cursor: pointer; }
-    #playerError { display: none; }
+    .video-container iframe,
+    .video-container video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
   </style>
 </head>
 <body class="bg-black text-gray-100 min-h-screen">
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-black bg-opacity-90 backdrop-blur-sm border-b border-yellow-600/20">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-          <i class="fas fa-shield-alt text-black text-xl"></i>
-        </div>
-        <h1 class="text-2xl font-bold gradient-text">CITADEL</h1>
-      </div>
 
-      <div class="flex items-center space-x-4">
-        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition">
-          <i class="fas fa-moon text-yellow-500"></i>
-        </button>
-        <button id="search-btn" class="p-2 rounded-full hover:bg-gray-800 transition">
-          <i class="fas fa-search text-yellow-500"></i>
-        </button>
+<header class="sticky top-0 z-50 bg-black bg-opacity-90 backdrop-blur-sm border-b border-yellow-600/20">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+        <i class="fas fa-shield-alt text-black text-xl"></i>
       </div>
+      <h1 class="text-2xl font-bold gradient-text">CITADEL</h1>
     </div>
-
-    <!-- Search Bar (hidden by default) -->
-    <div id="search-bar" class="hidden px-4 pb-4">
-      <div class="relative">
-        <input id="search-input" type="text" placeholder="Search episodes..." 
-               class="w-full bg-gray-900 border border-yellow-600/30 rounded-full py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
-        <i class="fas fa-search absolute left-3 top-3 text-yellow-500"></i>
-      </div>
+    
+    <div class="flex items-center space-x-4">
+      <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition">
+        <i class="fas fa-moon text-yellow-500"></i>
+      </button>
+      <button id="search-btn" class="p-2 rounded-full hover:bg-gray-800 transition">
+        <i class="fas fa-search text-yellow-500"></i>
+      </button>
     </div>
-  </header>
+  </div>
 
-  <!-- Main Content -->
-  <main class="container mx-auto px-4 py-8">
+  <div id="search-bar" class="hidden px-4 pb-4">
+    <div class="relative">
+      <input type="text" placeholder="Search episodes..." 
+             class="w-full bg-gray-900 border border-yellow-600/30 rounded-full py-2 px-4 pl-10 text-white">
+      <i class="fas fa-search absolute left-3 top-3 text-yellow-500"></i>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
   <section class="mb-12 relative overflow-hidden rounded-xl h-64 md:h-96">
     <video autoplay muted loop class="showcase-video">
       <source src="https://imdb-video.media-imdb.com/vi2384053273/1434659607842-pgv4ql-1680186912627.mp4?Expires=1762039966&Signature=jprEwKef4B4nLbnUYz0Zx9u4x4wlAWr0tfWqNE5pIqy1hC-jNoCpj24Eo9mTbGIVQjJkzJZAQLDmpfIf6aOM~4ZoVr9taie-0Ms6QGqsewgPfMxqFMVtOE~DXxN-rc9kjMM1OSf-~QPaay0AUKPRZQUtlJbK5gyF7xN34RA8GVQb3Z0yZfNVPLaMlEJ8TrvnOzTG6-8CUyIw38mwNxau5ixwFPriyrBMa9-IPJKsq3cXs8eoNpRgRwOvym4LgeZvU4LyOnSc1ZbRsUl0437m-VpIVgUe4nnFQG5BRE8PCGY7Cz-EJMZX3D9r1Q~aFDPF46K3HKIFoY35nJ1TMgPDBA__&Key-Pair-Id=APKAIFLZBVQZ24NQH3KA" type="video/mp4">
     </video>
-      <div class="absolute bottom-0 left-0 z-20 p-6 md:p-8">
-        <p class="text-gray-300 mb-4 max-w-lg">Global spy agency Citadel has fallen, and its agents' memories were wiped clean. Now the powerful syndicate, Manticore, is rising in the void. Can the Citadel agents recollect their past and summon the strength to fight back?</p>
-        <div class="flex space-x-3">
-          <button id="play-all-btn" class="bg-yellow-600 hover:bg-yellow-700 text-black font-semibold py-2 px-6 rounded-full transition flex items-center">
-            <i class="fas fa-play mr-2"></i> Play All
-          </button>
-          
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Filters -->
-    <div class="flex flex-wrap items-center justify-between mb-8 gap-4">
-      <div class="flex space-x-2 overflow-x-auto pb-2">
-        <button class="filter-btn active bg-yellow-600 text-black px-4 py-1 rounded-full text-sm font-medium" data-filter="all">All</button>
-        <button class="filter-btn bg-gray-800 hover:bg-gray-700 px-4 py-1 rounded-full text-sm font-medium" data-filter="thriller">Thriller</button>
-        <button class="filter-btn bg-gray-800 hover:bg-gray-700 px-4 py-1 rounded-full text-sm font-medium" data-filter="drama">Drama</button>
-        <button class="filter-btn bg-gray-800 hover:bg-gray-700 px-4 py-1 rounded-full text-sm font-medium" data-filter="political">Political</button>
-        <button class="filter-btn bg-gray-800 hover:bg-gray-700 px-4 py-1 rounded-full text-sm font-medium" data-filter="crime">Crime</button>
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <span class="text-gray-400 text-sm">Sort by:</span>
-        <select id="sort-select" class="bg-gray-900 border border-gray-700 text-white text-sm rounded-full px-3 py-1 focus:outline-none focus:ring-1 focus:ring-yellow-500">
-          <option value="release">Release Date</option>
-          <option value="order">Episode Order</option>
-          <option value="pop">Popularity</option>
-        </select>
-      </div>
+    <div class="showcase-overlay"></div>
+    <div class="showcase-content h-full flex flex-col justify-end p-6 md:p-8">
+      <p class="text-gray-300 mb-4 max-w-lg">Global spy agency Citadel has fallen, and its agents' memories were wiped clean. Now the powerful syndicate, Manticore, is rising in the void. Can the Citadel agents recollect their past and summon the strength to fight back?</p>
     </div>
+  </section>
 
-    <!-- Episodes Grid -->
-    <section>
-      <h3 class="text-xl font-semibold mb-6 flex items-center">
-        <i class="fas fa-list-ul text-yellow-500 mr-2"></i>
-        Episodes
-      </h3>
-
-      <div id="episodes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        <!-- Episode cards inserted by JS -->
-      </div>
-    </section>
-
-  
-
-      <div id="original-movie" class="grid grid-cols-1 gap-6">
-        <!-- Original movie card inserted by JS -->
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-gray-900 border-t border-gray-800 mt-12 py-8">
-    <div class="container mx-auto px-4">
-      <div class="flex flex-col md:flex-row justify-between items-center">
-        <div class="mb-4 md:mb-0">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-              <i class="fas fa-shield-alt text-black text-sm"></i>
-            </div>
-            <span class="text-xl font-bold gradient-text">CITADEL</span>
-          </div>
-          <p class="text-gray-400 text-sm mt-2">© All rights reserved.</p>
-        </div>
-
-        <div class="flex space-x-6">
-          <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i class="fab fa-twitter"></i></a>
-          <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i class="fab fa-instagram"></i></a>
-          <a href="#" class="text-gray-400 hover:text-yellow-500 transition"><i class="fab fa-youtube"></i></a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Playback Modal (from Marvel logic, adapted) -->
-  <div id="playback-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-90">
-    <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden p-4">
-      <button id="close-modal" class="absolute top-3 right-3 z-50 text-white hover:text-yellow-500 text-2xl transition"><i class="fas fa-times"></i></button>
-
-      <div class="aspect-video">
-        <video id="modal-video" class="w-full h-full bg-black" controls playsinline></video>
-      </div>
-
-      <div id="qualityControls" class="flex justify-center mt-3"></div>
-      <div id="playerError" class="hidden bg-red-900 text-white p-2 rounded mt-2 text-center"></div>
-
-      <div class="flex justify-between mt-3">
-        <button id="prevBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          <i class="fas fa-step-backward mr-1"></i> Prev
-        </button>
-        <div class="flex items-center gap-2">
-          <button id="fullscreenBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-            <i class="fas fa-expand mr-1"></i> Fullscreen
-          </button>
-          <button id="muteBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-            <i class="fas fa-volume-up mr-1"></i> Mute
-          </button>
-        </div>
-        <button id="nextBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          Next <i class="fas fa-step-forward ml-1"></i>
-        </button>
-      </div>
-
-      <h3 id="modal-title" class="text-xl font-bold text-yellow-400 mt-3"></h3>
-      <div class="text-center text-gray-400 text-sm mt-1">Keyboard: Space=Play/Pause, ←/→ seek, F=Fullscreen, N=Next, P=Prev, M=Mute</div>
+  <div class="flex overflow-x-auto mb-6 pb-2">
+    <div class="flex space-x-2">
+      <button class="season-btn active bg-yellow-600 text-black px-4 py-2 rounded-full" data-season="all">All Episodes</button>
+      <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="1">Season 1</button>
+      <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="2">Season 2(Coming Soon)</button>
     </div>
   </div>
 
-  <script>
-    /***************
-     * Data
-     * (kept from your jackal file)
-     ***************/
-    const episodes = [
+  <div class="flex flex-wrap justify-between mb-8 gap-4">
+    <div class="flex space-x-2 overflow-x-auto pb-2">
+      <button class="filter-btn active bg-yellow-600 text-black px-4 py-1 rounded-full">All</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Adventure</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Comedy</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Family</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Sci-Fi</button>
+    </div>
+  </div>
+
+  <section>
+    <h3 class="text-xl font-semibold mb-6"><i class="fas fa-list-ul text-yellow-500 mr-2"></i>Episodes</h3>
+    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+  </section>
+</main>
+
+<footer class="bg-gray-900 border-t border-gray-800 mt-12 py-8 text-center text-gray-400">
+  © CITADEL Productions
+</footer>
+
+<!-- Playback Modal -->
+<div id="playback-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-90">
+  <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden">
+    <button id="close-modal" class="absolute top-4 right-4 text-white text-2xl">&times;</button>
+    <div class="video-container">
+      <video id="modal-video" class="w-full" controls></video>
+    </div>
+    <div class="p-6">
+      <h3 id="modal-title" class="text-2xl font-bold mb-2"></h3>
+      <div id="season-episode" class="text-gray-400 text-sm mb-2"></div>
+      <div id="episode-duration" class="text-gray-400 text-sm mb-4"></div>
+      <p id="modal-description" class="text-gray-300"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========= EPISODE DATA =========
+const movies = [
+      // Season 1
       { 
         title: "The Human Enigma", 
         video: "https://s3ae.evergreenconstruction.store/v4/il/hde6j/cf-master.txt?v=1730755972", 
@@ -233,379 +216,95 @@
         description: "The season finale brings all the threads together as hidden truths are revealed and loyalties are put to the ultimate test.",
         duration: "58 min"
       },
-       ];
+      
+     
+    ];
 
 
+/* ✅ Add Spy-Kids MP4 detector */
+function isMP4(url) {
+  return /\.mp4($|\?)/i.test(url);
+}
 
-    /*********************
-     * UI element references
-     *********************/
-    const episodesContainer = document.getElementById('episodes');
-    const originalMovieContainer = document.getElementById('original-movie');
-    const searchBtn = document.getElementById('search-btn');
-    const searchBar = document.getElementById('search-bar');
-    const themeToggle = document.getElementById('theme-toggle');
-    const playbackModal = document.getElementById('playback-modal');
-    const closeModalBtn = document.getElementById('close-modal');
-    const modalVideo = document.getElementById('modal-video');
-    const modalTitle = document.getElementById('modal-title');
-    const qualityControls = document.getElementById('qualityControls');
-    const playerError = document.getElementById('playerError');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const muteBtn = document.getElementById('muteBtn');
-    const searchInput = document.getElementById('search-input');
-    const playAllBtn = document.getElementById('play-all-btn');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const sortSelect = document.getElementById('sort-select');
+/* DOM elements */
+const container = document.getElementById('movies');
+const playbackModal = document.getElementById('playback-modal');
+const modalVideo = document.getElementById('modal-video');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.getElementById('modal-description');
+const seasonEpisode = document.getElementById('season-episode');
+const episodeDuration = document.getElementById('episode-duration');
+const closeModal = document.getElementById('close-modal');
 
-    // State for modal
-    let currentList = []; // filtered list
-    let currentVideo = null; // { index: number, item: {} }
-    let currentFilter = 'all';
-    let currentSort = 'release';
+let currentSeason = 'all';
+let currentFilter = 'All';
 
-    /***********************
-     * Helper functions (from Marvel logic)
-     ***********************/
-    function isStream(url) {
-      return /\.(m3u8|txt)$/i.test(url);
-    }
-    function isMP4(url) {
-      return /\.mp4(\?|$)/i.test(url);
-    }
+function initPage() {
+  renderMovies();
+  document.querySelectorAll('.season-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelector('.season-btn.active').classList.remove('active', 'bg-yellow-600', 'text-black');
+      this.classList.add('active', 'bg-yellow-600', 'text-black');
+      currentSeason = this.dataset.season;
+      renderMovies();
+    });
+  });
 
-    function showError(msg) {
-      playerError.textContent = msg;
-      playerError.classList.remove('hidden');
-      setTimeout(() => playerError.classList.add('hidden'), 3500);
-    }
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelector('.filter-btn.active').classList.remove('active', 'bg-yellow-600', 'text-black');
+      this.classList.add('active', 'bg-yellow-600', 'text-black');
+      currentFilter = this.textContent;
+      renderMovies();
+    });
+  });
+}
 
-    /***********************
-     * Rendering
-     ***********************/
-    function renderEpisodes() {
-      // Build filtered list (episodes only)
-      const term = (searchInput.value || '').toLowerCase().trim();
-      let list = episodes.slice();
+function renderMovies() {
+  container.innerHTML = '';
+  let filtered = movies;
+  if (currentSeason !== 'all') filtered = filtered.filter(m => m.season == currentSeason);
+  if (currentFilter !== 'All') filtered = filtered.filter(m => m.tags.includes(currentFilter));
 
-      // Simple filter by data-filter on buttons (this demo uses no tags, so filters are illustrative)
-      if (currentFilter !== 'all') {
-        // Example: keep all for now — placeholder for real tag-based filtering
-        // list = list.filter(e => (e.tags||[]).includes(currentFilter));
-      }
+  filtered.forEach((movie, i) => {
+    const card = document.createElement('div');
+    card.className = `movie-card fade-in delay-${i%5} glow-effect`;
+    card.innerHTML = `
+      <div class="relative group cursor-pointer overflow-hidden rounded-xl">
+        <img src="${movie.image}" class="w-full h-48 object-cover rounded-xl transition group-hover:scale-105">
+        <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-yellow-500 text-3xl"><i class="fas fa-play"></i></div>
+      </div>
+      <div class="mt-3 text-white font-medium">${movie.title}</div>
+      <div class="text-gray-400 text-sm">S${movie.season} • E${movie.episode} • ${movie.duration}</div>
+    `;
 
-      // search
-      if (term) {
-        list = list.filter(e => e.title.toLowerCase().includes(term) || (e.description||'').toLowerCase().includes(term));
-      }
-
-      // sort (episode order is original array order; leave as-is or implement)
-      if (currentSort === 'release') {
-        // by year then index
-        list.sort((a,b) => (a.year||0) - (b.year||0));
-      } else if (currentSort === 'order') {
-        // keep original order
-      } else if (currentSort === 'pop') {
-        list.sort((a,b) => (b.rating||0) - (a.rating||0));
-      }
-
-      // store for modal navigation (episodes only). We'll append originalMovie as last item separately later.
-      currentList = list.slice();
-
-      episodesContainer.innerHTML = '';
-      list.forEach((ep, idx) => {
-        const card = createEpisodeCard(ep, idx);
-        episodesContainer.appendChild(card);
-      });
-    }
-
-    function createEpisodeCard(ep, idx) {
-      const outer = document.createElement('div');
-      outer.className = `movie-card fade-in delay-${(idx%5)+1} glow-effect`;
-      outer.innerHTML = `
-        <div class="relative group overflow-hidden rounded-xl cursor-pointer">
-          <img src="${ep.image}" alt="${ep.title}" class="w-full h-48 sm:h-56 md:h-64 object-cover rounded-xl transition duration-500 group-hover:scale-105">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-            <div>
-              <h3 class="text-white font-semibold text-lg">${ep.title}</h3>
-              <p class="text-gray-300 text-sm">${ep.runtime}</p>
-            </div>
-          </div>
-          <div class="absolute top-3 right-3 bg-black bg-opacity-70 text-yellow-500 rounded-full w-10 h-10 flex items-center justify-center">
-            <i class="fas fa-play"></i>
-          </div>
-        </div>
-        <div class="mt-3">
-          <h3 class="text-white font-medium">${ep.title}</h3>
-          <div class="flex items-center text-gray-400 text-sm mt-1">
-            <span>S1 • E${idx + 1}</span><span class="mx-2">•</span><span>${ep.runtime}</span>
-          </div>
-        </div>
-      `;
-      outer.addEventListener('click', () => {
-        // When opening an episode, ensure currentList includes episodes + original at the end for navigation
-        const combined = currentList.concat([originalMovie]); // last index is original movie
-        openPlaybackFor(combined, idx, true);
-      });
-      return outer;
-    }
-
-    function renderOriginalMovieCard() {
-      originalMovieContainer.innerHTML = '';
-      const idx = episodes.length; // used only if we combine lists
-      const card = document.createElement('div');
-      card.className = `movie-card fade-in delay-1 glow-effect`;
-      card.innerHTML = `
-        <div class="relative group overflow-hidden rounded-xl cursor-pointer">
-          <img src="${originalMovie.image}" alt="${originalMovie.title}" class="w-full h-48 sm:h-56 md:h-64 object-cover rounded-xl transition duration-500 group-hover:scale-105">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-            <div>
-              <h3 class="text-white font-semibold text-lg">${originalMovie.title}</h3>
-              <p class="text-gray-300 text-sm">${originalMovie.runtime}</p>
-            </div>
-          </div>
-          <div class="absolute top-3 right-3 bg-black bg-opacity-70 text-yellow-500 rounded-full w-10 h-10 flex items-center justify-center">
-            <i class="fas fa-play"></i>
-          </div>
-        </div>
-        <div class="mt-3">
-          <h3 class="text-white font-medium">${originalMovie.title}</h3>
-          <div class="flex items-center text-gray-400 text-sm mt-1">
-            <span>${originalMovie.year}</span><span class="mx-2">•</span><span>${originalMovie.runtime}</span>
-          </div>
-        </div>
-      `;
-      card.addEventListener('click', () => {
-        // combine episodes + original so prev/next navigate sensibly
-        const combined = episodes.slice().concat([originalMovie]);
-        openPlaybackFor(combined, combined.length - 1, false);
-      });
-      originalMovieContainer.appendChild(card);
-    }
-
-    /***********************
-     * Playback logic (adapted from Marvel)
-     * - supports:
-     *   - string mp4 (play in modal)
-     *   - string .m3u8/.txt (redirect to player.html)
-     *   - object { low, medium, high } (quality controls; prefer high)
-     ***********************/
-    function openPlaybackFor(listArray, indexToOpen, isEpisode) {
-      if (!Array.isArray(listArray) || listArray.length === 0) return showError("No videos available");
-      const item = listArray[indexToOpen];
-      if (!item) return showError("Item not found");
-
-      // If video is an object (multiple qualities) check for stream vs mp4 inside values
-      const videoVal = item.video;
-      let videoCombinedValues = '';
-      if (typeof videoVal === 'object') videoCombinedValues = Object.values(videoVal).join(' ');
-
-      // If stream (m3u8 / txt) and NOT mp4 — redirect to player.html (external player)
-      if ((typeof videoVal === 'string' && isStream(videoVal) && !isMP4(videoVal))
-        || (typeof videoVal === 'object' && isStream(videoCombinedValues) && !isMP4(videoCombinedValues))) {
-        // Redirect to player page with encoded video(s)
-        const encoded = encodeURIComponent(typeof videoVal === 'object' ? videoCombinedValues : videoVal);
-        const title = encodeURIComponent(item.title || 'Video');
-        window.location.href = `player.html?title=${title}&video=${encoded}`;
-        return;
-      }
-
-      // Else, play in modal (MP4 or direct playable)
-      playInModal(listArray, indexToOpen);
-    }
-
-    function playInModal(listArr, index) {
-      const item = listArr[index];
-      if (!item) return showError("Video not available");
-
-      // Build quality controls if item.video is object
-      qualityControls.innerHTML = '';
-      if (typeof item.video === 'object') {
-        const entries = Object.entries(item.video);
-        entries.forEach(([quality, url]) => {
-          const btn = document.createElement('button');
-          btn.className = 'quality-btn px-3 py-1 mx-1 rounded bg-gray-700 hover:bg-gray-600 text-sm text-white';
-          btn.dataset.url = url;
-          btn.dataset.quality = quality;
-          btn.innerText = quality.toUpperCase();
-          qualityControls.appendChild(btn);
-        });
-      }
-
-      // Title
-      modalTitle.textContent = item.title || '';
-
-      // Choose src: prefer high -> medium -> low when object
-      let src = '';
-      if (typeof item.video === 'object') {
-        src = item.video.high || item.video.medium || item.video.low || Object.values(item.video)[0];
+    /* ✅ Spy-Kids logic applied */
+    card.addEventListener('click', () => {
+      if (isMP4(movie.video)) {
+        openModal(movie);
       } else {
-        src = item.video;
+        window.location.href =
+          `player.html?title=${encodeURIComponent(movie.title)}&video=${encodeURIComponent(movie.video)}`;
       }
-
-      // Set video source and show modal
-      modalVideo.pause();
-      // handle browser caching same-time update by clearing src first
-      modalVideo.src = src;
-      playbackModal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-      currentVideo = { index, list: listArr, item };
-
-      // Attempt autoplay; if not allowed show notice but still display modal
-      modalVideo.play().catch(() => {
-        showError("Autoplay blocked — press play to start.");
-      });
-
-      updatePrevNextButtons();
-    }
-
-    function updatePrevNextButtons() {
-      if (!currentVideo || !Array.isArray(currentVideo.list)) {
-        prevBtn.disabled = nextBtn.disabled = true;
-        return;
-      }
-      prevBtn.disabled = currentVideo.index <= 0;
-      nextBtn.disabled = currentVideo.index >= currentVideo.list.length - 1;
-    }
-
-    function closeModalHandler() {
-      modalVideo.pause();
-      modalVideo.src = '';
-      playbackModal.classList.add('hidden');
-      document.body.style.overflow = '';
-      currentVideo = null;
-    }
-
-    function togglePlayPause() {
-      modalVideo.paused ? modalVideo.play().catch(()=>showError('Play blocked')) : modalVideo.pause();
-    }
-    function seek(seconds) {
-      try { modalVideo.currentTime = Math.max(0, (modalVideo.currentTime || 0) + seconds); } catch(e){ /* ignore */ }
-    }
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        // try video element first (prefers fullscreen just for video)
-        (modalVideo.requestFullscreen?.() || document.documentElement.requestFullscreen?.()).catch(err => showError("Fullscreen failed: " + (err.message || err)));
-      } else {
-        document.exitFullscreen?.();
-      }
-    }
-    function toggleMute() {
-      modalVideo.muted = !modalVideo.muted;
-      muteBtn.innerHTML = modalVideo.muted ? '<i class="fas fa-volume-mute mr-1"></i> Unmute' : '<i class="fas fa-volume-up mr-1"></i> Mute';
-    }
-
-    function playNext() {
-      if (!currentVideo || !Array.isArray(currentVideo.list)) return;
-      if (currentVideo.index < currentVideo.list.length - 1) {
-        playInModal(currentVideo.list, currentVideo.index + 1);
-      } else {
-        showError("No next video in this list.");
-      }
-    }
-    function playPrevious() {
-      if (!currentVideo || !Array.isArray(currentVideo.list)) return;
-      if (currentVideo.index > 0) {
-        playInModal(currentVideo.list, currentVideo.index - 1);
-      } else {
-        showError("No previous video in this list.");
-      }
-    }
-
-    /***********************
-     * Event listeners
-     ***********************/
-    // Modal control buttons
-    closeModalBtn.addEventListener('click', closeModalHandler);
-    prevBtn.addEventListener('click', playPrevious);
-    nextBtn.addEventListener('click', playNext);
-    fullscreenBtn.addEventListener('click', toggleFullscreen);
-    muteBtn.addEventListener('click', toggleMute);
-
-    // clicking outside modal content closes it
-    playbackModal.addEventListener('click', (e) => {
-      if (e.target === playbackModal) closeModalHandler();
     });
 
-    // Quality selector (event delegation)
-    qualityControls.addEventListener('click', (e) => {
-      const t = e.target;
-      if (!t.dataset || !t.dataset.url) return;
-      const url = t.dataset.url;
-      const currentTime = modalVideo.currentTime || 0;
-      modalVideo.src = url;
-      modalVideo.currentTime = currentTime;
-      modalVideo.play().catch(()=>showError("Click play to resume."));
-    });
+    container.appendChild(card);
+  });
+}
 
-    // Keyboard shortcuts when modal open
-    document.addEventListener('keydown', (e) => {
-      if (playbackModal.classList.contains('hidden')) return;
-      const key = e.key.toLowerCase();
-      if (key === 'escape') closeModalHandler();
-      else if (key === ' ') { e.preventDefault(); togglePlayPause(); }
-      else if (key === 'arrowright') seek(10);
-      else if (key === 'arrowleft') seek(-10);
-      else if (key === 'f') toggleFullscreen();
-      else if (key === 'm') toggleMute();
-      else if (key === 'n') playNext();
-      else if (key === 'p') playPrevious();
-    });
+function openModal(m) {
+  modalTitle.textContent = m.title;
+  modalDescription.textContent = m.description;
+  seasonEpisode.textContent = `S${m.season} • E${m.episode}`;
+  episodeDuration.textContent = m.duration;
+  modalVideo.src = m.video;
+  playbackModal.classList.remove('hidden');
+}
 
-    modalVideo.addEventListener('error', () => showError("Failed to load video. It may be blocked or unavailable."));
+closeModal.onclick = () => { playbackModal.classList.add('hidden'); modalVideo.pause(); };
 
-    // Search toggle
-    searchBtn.addEventListener('click', () => searchBar.classList.toggle('hidden'));
+window.addEventListener('DOMContentLoaded', initPage);
+</script>
 
-    // Theme toggle (simple invert)
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('bg-gray-100');
-      document.body.classList.toggle('text-gray-900');
-      document.body.classList.toggle('bg-black');
-      document.body.classList.toggle('text-gray-100');
-      const icon = themeToggle.querySelector('i');
-      if (document.body.classList.contains('bg-black')) { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
-      else { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
-    });
-
-    // Filter buttons
-    filterButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelector('.filter-btn.active')?.classList.remove('active', 'bg-yellow-600', 'text-black');
-        this.classList.add('active', 'bg-yellow-600', 'text-black');
-        currentFilter = this.dataset.filter || 'all';
-        renderEpisodes();
-      });
-    });
-
-    // Sort select
-    sortSelect.addEventListener('change', (e) => {
-      currentSort = e.target.value || 'release';
-      renderEpisodes();
-    });
-
-    // Search input (live)
-    searchInput.addEventListener('input', () => renderEpisodes());
-
-    // Play all button: play first episode then rely on nextBtn behavior
-    playAllBtn.addEventListener('click', () => {
-      const combined = episodes.slice().concat([originalMovie]);
-      if (combined.length > 0) openPlaybackFor(combined, 0, true);
-    });
-
-    // Prevent accidental navigation on clicking card links (no links here)
-
-    /***********************
-     * Initialize page
-     ***********************/
-    function initPage() {
-      renderEpisodes();
-      renderOriginalMovieCard();
-    }
-
-    window.addEventListener('DOMContentLoaded', initPage);
-  </script>
 </body>
 </html>
